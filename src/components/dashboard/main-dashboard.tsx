@@ -217,12 +217,13 @@ export function MainDashboard() {
       </SidebarInset>
 
       <AddBookmarkDialog
-        key={editingBookmark ? editingBookmark.id : 'add'}
+        key={dialogMode === 'add' ? 'add-bookmark' : editingBookmark?.id}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSave={handleSaveBookmark}
         mode={dialogMode}
         bookmark={editingBookmark}
+        allTags={allTags}
       >
         <div style={{ display: 'none' }} />
       </AddBookmarkDialog>

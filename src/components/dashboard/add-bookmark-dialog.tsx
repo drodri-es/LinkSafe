@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, Globe } from 'lucide-react';
+import { Loader2, Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Bookmark } from '@/lib/types';
+import { TagInput } from './tag-input';
 
 const bookmarkSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid URL.' }),
@@ -39,6 +40,7 @@ type AddBookmarkDialogProps = {
   mode: 'add' | 'edit';
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  allTags: string[];
 };
 
 export function AddBookmarkDialog({
@@ -48,6 +50,7 @@ export function AddBookmarkDialog({
   mode,
   open,
   onOpenChange,
+  allTags,
 }: AddBookmarkDialogProps) {
   const [isFetching, setIsFetching] = useState(false);
   const { toast } = useToast();
@@ -180,7 +183,12 @@ export function AddBookmarkDialog({
                 <FormItem>
                   <FormLabel>Tags</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. work, design, inspiration" {...field} />
+                    <TagInput
+                      {...field}
+                      allTags={allTags}
+                      placeholder="e.g. work, design, inspiration"
+                      onChange={(value) => field.onChange(value)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
