@@ -2,13 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /bookmarks/{bookmarkId} {
-      // Allow the owner to read, update, and delete their own bookmarks.
-      allow get, update, delete: if request.auth.uid == resource.data.userId;
-      // Allow any authenticated user to list the bookmarks collection to gather tags.
-      // Note: This does not allow them to read the full content of individual documents they don't own.
-      allow list: if request.auth.uid != null;
-      // Allow a user to create a bookmark if they are authenticated and the new bookmark's userId is their own.
-      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      // Allow any authenticated user to read and list bookmarks for tag discovery.
+      allow read, list: if request.auth != null;
+      
+      // Only allow the user who created the bookmark to update or delete it.
+      allow update, delete: if request.auth.uid == resource.data.userId;
+
+      // Allow any authenticated user to create a bookmark, as long as they set the userId correctly.
+      allow create: if request.auth.uid == request.resource.data.userId;
     }
   }
 }
