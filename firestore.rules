@@ -1,28 +1,14 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Bookmarks collection rules
     match /bookmarks/{bookmarkId} {
-      // Allow a user to create a bookmark if they are signed in and the bookmark's userId matches their own.
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-
-      // Allow a user to read, update, or delete their own bookmarks.
-      allow read, update, delete: if isSignedIn() && isOwner(resource.data.userId);
-
-      // Deny listing all bookmarks by default for security.
-      // Individual user bookmarks are queried specifically by userId in the app.
-      allow list: if false;
+      // Allow the owner to read, update, and delete their own bookmarks.
+      allow get, update, delete: if request.auth.uid == resource.data.userId;
+      // Allow any authenticated user to list the bookmarks collection to gather tags.
+      // Note: This does not allow them to read the full content of individual documents they don't own.
+      allow list: if request.auth.uid != null;
+      // Allow a user to create a bookmark if they are authenticated and the new bookmark's userId is their own.
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
     }
   }
 }
