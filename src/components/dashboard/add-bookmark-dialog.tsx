@@ -37,12 +37,24 @@ type AddBookmarkDialogProps = {
   bookmark?: Bookmark;
   onSave: (bookmark: Omit<Bookmark, 'id' | 'createdAt'>, id?: string) => void;
   mode: 'add' | 'edit';
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export function AddBookmarkDialog({ children, bookmark, onSave, mode }: AddBookmarkDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function AddBookmarkDialog({
+  children,
+  bookmark,
+  onSave,
+  mode,
+  open,
+  onOpenChange,
+}: AddBookmarkDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const { toast } = useToast();
+
+  const isOpen = open ?? internalOpen;
+  const setIsOpen = onOpenChange ?? setInternalOpen;
 
   const defaultValues: Partial<BookmarkFormValues> = {
     url: bookmark?.url ?? '',
@@ -55,13 +67,12 @@ export function AddBookmarkDialog({ children, bookmark, onSave, mode }: AddBookm
     resolver: zodResolver(bookmarkSchema),
     defaultValues,
   });
-  
+
   useEffect(() => {
     if (isOpen) {
       form.reset(defaultValues);
     }
-  }, [isOpen, bookmark, form]);
-
+  }, [isOpen, bookmark, form, defaultValues]);
 
   const handleUrlBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const url = e.target.value;
@@ -101,7 +112,7 @@ export function AddBookmarkDialog({ children, bookmark, onSave, mode }: AddBookm
     }
 
     const tagsArray = data.tags ? data.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
-    
+
     onSave({ ...data, tags: tagsArray, favicon }, bookmark?.id);
     setIsOpen(false);
     toast({
@@ -116,9 +127,7 @@ export function AddBookmarkDialog({ children, bookmark, onSave, mode }: AddBookm
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>{mode === 'add' ? 'Add a new bookmark' : 'Edit bookmark'}</DialogTitle>
-          <DialogDescription>
-            Fill in the details below. Click save when you&apos;re done.
-          </DialogDescription>
+          <DialogDescription>Fill in the details below. Click save when you&apos;re done.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -131,7 +140,7 @@ export function AddBookmarkDialog({ children, bookmark, onSave, mode }: AddBookm
                   <FormControl>
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input placeholder="https://example.com" {...field} onBlur={handleUrlBlur} className="pl-9"/>
+                      <Input placeholder="https://example.com" {...field} onBlur={handleUrlBlur} className="pl-9" />
                       {isFetching && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />}
                     </div>
                   </FormControl>

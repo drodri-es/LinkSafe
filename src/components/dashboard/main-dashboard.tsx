@@ -10,7 +10,6 @@ import { BookmarkList } from './bookmark-list';
 import { Header } from './header';
 import { SidebarContent } from './sidebar-content';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -25,7 +24,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from '@/components/ui/sidebar';
-import { useToast } from '../ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Logo } from '../logo';
 
 export function MainDashboard() {
@@ -188,6 +187,8 @@ export function MainDashboard() {
       {editingBookmark && (
         <AddBookmarkDialog
           key={editingBookmark.id}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
           bookmark={editingBookmark}
           onSave={(data, id) => handleEditBookmark(data, id!)}
           mode="edit"
