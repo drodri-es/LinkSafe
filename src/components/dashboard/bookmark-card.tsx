@@ -82,8 +82,8 @@ export function BookmarkCard({ bookmark, onEdit, onDelete }: BookmarkCardProps) 
       <CardContent className="flex flex-grow flex-col justify-between pt-0">
         <p className="mb-4 text-sm text-muted-foreground">{bookmark.description}</p>
         <div className="flex flex-wrap gap-2">
-          {bookmark.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="cursor-pointer">
+          {bookmark.tags.map((tag, index) => (
+            <Badge key={`${tag}-${index}`} variant="secondary" className="cursor-pointer">
               {tag}
             </Badge>
           ))}
