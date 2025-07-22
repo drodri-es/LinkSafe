@@ -34,11 +34,11 @@ type BookmarkFormValues = z.infer<typeof bookmarkSchema>;
 
 type AddBookmarkDialogProps = {
   children: React.ReactNode;
-  bookmark?: Bookmark;
+  bookmark?: Bookmark | null;
   onSave: (bookmark: Omit<Bookmark, 'id' | 'createdAt'>, id?: string) => void;
   mode: 'add' | 'edit';
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 export function AddBookmarkDialog({
@@ -49,30 +49,30 @@ export function AddBookmarkDialog({
   open,
   onOpenChange,
 }: AddBookmarkDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const { toast } = useToast();
 
-  const isOpen = open ?? internalOpen;
-  const setIsOpen = onOpenChange ?? setInternalOpen;
-
-  const defaultValues: Partial<BookmarkFormValues> = {
-    url: bookmark?.url ?? '',
-    title: bookmark?.title ?? '',
-    description: bookmark?.description ?? '',
-    tags: bookmark?.tags?.join(', ') ?? '',
-  };
-
   const form = useForm<BookmarkFormValues>({
     resolver: zodResolver(bookmarkSchema),
-    defaultValues,
+    defaultValues: {
+      url: '',
+      title: '',
+      description: '',
+      tags: '',
+    },
   });
 
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
+      const defaultValues = {
+        url: bookmark?.url ?? '',
+        title: bookmark?.title ?? '',
+        description: bookmark?.description ?? '',
+        tags: bookmark?.tags?.join(', ') ?? '',
+      };
       form.reset(defaultValues);
     }
-  }, [isOpen, bookmark, form, defaultValues]);
+  }, [open, bookmark, form]);
 
   const handleUrlBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const url = e.target.value;
@@ -99,30 +99,29 @@ export function AddBookmarkDialog({
 
   const onSubmit = async (data: BookmarkFormValues) => {
     const url = data.url;
-    let favicon: string | undefined = undefined;
+    let favicon: string | undefined = bookmark?.favicon;
 
-    try {
-      setIsFetching(true);
-      const details = await autoFillBookmarkDetails({ url });
-      favicon = details.favicon;
-    } catch (error) {
-      console.error("Couldn't fetch favicon, but saving bookmark anyway.");
-    } finally {
-      setIsFetching(false);
+    // Only refetch favicon if URL changed or not present
+    if (url !== bookmark?.url || !favicon) {
+      try {
+        setIsFetching(true);
+        const details = await autoFillBookmarkDetails({ url });
+        favicon = details.favicon;
+      } catch (error) {
+        console.error("Couldn't fetch favicon, but saving bookmark anyway.");
+      } finally {
+        setIsFetching(false);
+      }
     }
+
 
     const tagsArray = data.tags ? data.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
 
     onSave({ ...data, tags: tagsArray, favicon }, bookmark?.id);
-    setIsOpen(false);
-    toast({
-      title: `Bookmark ${mode === 'add' ? 'added' : 'updated'}`,
-      description: 'Your bookmark has been saved successfully.',
-    });
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
@@ -188,7 +187,7 @@ export function AddBookmarkDialog({
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isFetching}>

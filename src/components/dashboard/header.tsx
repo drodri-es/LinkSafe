@@ -2,7 +2,6 @@
 
 import { Plus, Search, User as UserIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { AddBookmarkDialog } from '@/components/dashboard/add-bookmark-dialog';
 import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -17,15 +16,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/use-auth.tsx';
-import type { Bookmark } from '@/lib/types';
 
 type HeaderProps = {
-  onAddBookmark: (bookmark: Omit<Bookmark, 'id' | 'createdAt'>) => void;
   setSearchText: (text: string) => void;
   openAddDialog: () => void;
 };
 
-export function Header({ onAddBookmark, setSearchText, openAddDialog }: HeaderProps) {
+export function Header({ setSearchText, openAddDialog }: HeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
 

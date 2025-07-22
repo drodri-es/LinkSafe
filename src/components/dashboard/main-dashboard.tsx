@@ -9,7 +9,6 @@ import { AddBookmarkDialog } from './add-bookmark-dialog';
 import { BookmarkList } from './bookmark-list';
 import { Header } from './header';
 import { SidebarContent } from './sidebar-content';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -40,8 +39,9 @@ export function MainDashboard() {
   );
 
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | undefined>(undefined);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+
 
   useEffect(() => {
     // In a real app, you would fetch bookmarks from Firestore here.
@@ -59,10 +59,10 @@ export function MainDashboard() {
   }, [user, loading, router]);
   
   useEffect(() => {
-    if (!isEditDialogOpen) {
+    if (!dialogOpen) {
       setEditingBookmark(undefined);
     }
-  }, [isEditDialogOpen]);
+  }, [dialogOpen]);
 
   const handleAddBookmark = (newBookmarkData: Omit<Bookmark, 'id' | 'createdAt'>) => {
     const newBookmark: Bookmark = {
@@ -82,10 +82,27 @@ export function MainDashboard() {
     setEditingBookmark(undefined);
   };
   
-  const openEditDialog = (bookmark: Bookmark) => {
-    setEditingBookmark(bookmark);
-    setIsEditDialogOpen(true);
+  const handleSaveBookmark = (bookmarkData: Omit<Bookmark, 'id' | 'createdAt'>, id?: string) => {
+    if (id) {
+      handleEditBookmark(bookmarkData, id);
+    } else {
+      handleAddBookmark(bookmarkData);
+    }
+    setDialogOpen(false);
   };
+
+  const openAddDialog = () => {
+    setDialogMode('add');
+    setEditingBookmark(undefined);
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (bookmark: Bookmark) => {
+    setDialogMode('edit');
+    setEditingBookmark(bookmark);
+    setDialogOpen(true);
+  };
+
 
   const handleDeleteBookmark = (id: string) => {
     setBookmarks((prev) => prev.filter((bm) => bm.id !== id));
@@ -130,10 +147,6 @@ export function MainDashboard() {
       });
   }, [bookmarks, searchText, selectedTags, sortOrder]);
 
-  const openAddDialog = () => {
-    setIsAddDialogOpen(true);
-  };
-
   if (loading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -153,7 +166,7 @@ export function MainDashboard() {
         </SidebarUiContent>
       </Sidebar>
       <SidebarInset>
-        <Header onAddBookmark={handleAddBookmark} setSearchText={setSearchText} openAddDialog={openAddDialog} />
+        <Header setSearchText={setSearchText} openAddDialog={openAddDialog} />
         <main className="flex-1 p-4 md:p-6">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Your Bookmarks</h1>
@@ -180,29 +193,18 @@ export function MainDashboard() {
         </main>
       </SidebarInset>
 
-      <AddBookmarkDialog 
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSave={handleAddBookmark}
-        mode="add"
+      <AddBookmarkDialog
+        key={editingBookmark ? editingBookmark.id : 'add'}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveBookmark}
+        mode={dialogMode}
+        bookmark={editingBookmark}
       >
-        {/* This dialog is controlled programmatically from the header */}
+        {/* This is a controlled component, the trigger is handled in Header/BookmarkCard */}
         <div style={{ display: 'none' }} />
       </AddBookmarkDialog>
 
-      {editingBookmark && (
-        <AddBookmarkDialog
-          key={editingBookmark.id}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          bookmark={editingBookmark}
-          onSave={(data, id) => handleEditBookmark(data, id!)}
-          mode="edit"
-        >
-          {/* This dialog is controlled programmatically */}
-          <div style={{ display: 'none' }} />
-        </AddBookmarkDialog>
-      )}
     </SidebarProvider>
   );
 }
