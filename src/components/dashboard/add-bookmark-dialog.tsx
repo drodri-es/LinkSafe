@@ -28,7 +28,7 @@ const bookmarkSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid URL.' }),
   title: z.string().min(1, { message: 'Title is required.' }),
   description: z.string().optional(),
-  tags: z.string().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 type BookmarkFormValues = z.infer<typeof bookmarkSchema>;
@@ -61,7 +61,7 @@ export function AddBookmarkDialog({
       url: '',
       title: '',
       description: '',
-      tags: '',
+      tags: [],
     },
   });
 
@@ -71,7 +71,7 @@ export function AddBookmarkDialog({
         url: bookmark?.url ?? '',
         title: bookmark?.title ?? '',
         description: bookmark?.description ?? '',
-        tags: bookmark?.tags?.join(', ') ?? '',
+        tags: bookmark?.tags ?? [],
       };
       form.reset(defaultValues);
     }
@@ -118,9 +118,7 @@ export function AddBookmarkDialog({
     }
 
 
-    const tagsArray = data.tags ? data.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
-
-    onSave({ ...data, tags: tagsArray, favicon }, bookmark?.id);
+    onSave({ ...data, tags: data.tags || [], favicon }, bookmark?.id);
   };
 
   return (
@@ -186,8 +184,9 @@ export function AddBookmarkDialog({
                     <TagInput
                       {...field}
                       allTags={allTags}
-                      placeholder="e.g. work, design, inspiration"
-                      onChange={(value) => field.onChange(value)}
+                      placeholder="Add a tag..."
+                      value={field.value || []}
+                      onChange={(tags) => field.onChange(tags)}
                     />
                   </FormControl>
                   <FormMessage />
