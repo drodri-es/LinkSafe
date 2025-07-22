@@ -5,6 +5,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   query,
   serverTimestamp,
@@ -43,6 +44,7 @@ export function MainDashboard() {
   const { toast } = useToast();
 
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [allPublicTags, setAllPublicTags] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<'date-desc' | 'date-asc' | 'title-asc' | 'title-desc'>(
@@ -59,6 +61,7 @@ export function MainDashboard() {
     }
   }, [user, loading, router]);
 
+  // Fetch current user's bookmarks
   useEffect(() => {
     if (user?.uid) {
       const q = query(collection(db, 'bookmarks'), where('userId', '==', user.uid));
@@ -77,6 +80,24 @@ export function MainDashboard() {
       return () => unsubscribe();
     }
   }, [user]);
+
+  // Fetch all tags from all users for autocomplete
+  useEffect(() => {
+    const fetchAllTags = async () => {
+      const q = query(collection(db, 'bookmarks'));
+      const querySnapshot = await getDocs(q);
+      const tags = new Set<string>();
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.tags && Array.isArray(data.tags)) {
+          data.tags.forEach((tag: string) => tags.add(tag));
+        }
+      });
+      setAllPublicTags(Array.from(tags).sort());
+    };
+
+    fetchAllTags();
+  }, [bookmarks]); // Re-fetch if local bookmarks change to include new tags immediately
 
   useEffect(() => {
     if (!dialogOpen) {
@@ -135,7 +156,7 @@ export function MainDashboard() {
     }
   };
 
-  const allTags = useMemo(() => {
+  const allCurrentUserTags = useMemo(() => {
     const tags = new Set<string>();
     bookmarks.forEach((bm) => bm.tags.forEach((tag) => tags.add(tag)));
     return Array.from(tags).sort();
@@ -185,7 +206,7 @@ export function MainDashboard() {
           <Logo />
         </SidebarHeader>
         <SidebarUiContent>
-          <SidebarContent allTags={allTags} selectedTags={selectedTags} setSelectedTags={setSelectedTags} />
+          <SidebarContent allTags={allCurrentUserTags} selectedTags={selectedTags} setSelectedTags={setSelectedTags} />
         </SidebarUiContent>
       </Sidebar>
       <SidebarInset>
@@ -223,7 +244,7 @@ export function MainDashboard() {
         onSave={handleSaveBookmark}
         mode={dialogMode}
         bookmark={editingBookmark}
-        allTags={allTags}
+        allTags={allPublicTags}
       >
         <div style={{ display: 'none' }} />
       </AddBookmarkDialog>
