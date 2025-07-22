@@ -2,6 +2,7 @@
 
 import { Globe, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,14 +22,26 @@ type BookmarkCardProps = {
 
 export function BookmarkCard({ bookmark, onEdit, onDelete }: BookmarkCardProps) {
   const domain = new URL(bookmark.url).hostname;
+  const [faviconError, setFaviconError] = useState(false);
+
+  const handleFaviconError = () => {
+    setFaviconError(true);
+  };
 
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg">
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div className="flex items-start gap-4">
           <div className="relative mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border bg-card">
-            {bookmark.favicon ? (
-              <Image src={bookmark.favicon} alt={`${bookmark.title} favicon`} width={20} height={20} className="object-contain" />
+            {bookmark.favicon && !faviconError ? (
+              <Image
+                src={bookmark.favicon}
+                alt={`${bookmark.title} favicon`}
+                width={20}
+                height={20}
+                className="object-contain"
+                onError={handleFaviconError}
+              />
             ) : (
               <Globe className="h-5 w-5 text-muted-foreground" />
             )}
