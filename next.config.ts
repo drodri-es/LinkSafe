@@ -64,6 +64,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'es.wikipedia.org',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
