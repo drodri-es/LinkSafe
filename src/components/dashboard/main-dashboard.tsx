@@ -1,10 +1,21 @@
 'use client';
 
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth.tsx';
-import { mockBookmarks } from '@/lib/data';
+import { useAuth } from '@/hooks/use-auth';
 import type { Bookmark } from '@/lib/types';
+import { db } from '@/lib/firebase';
 import { AddBookmarkDialog } from './add-bookmark-dialog';
 import { BookmarkList } from './bookmark-list';
 import { Header } from './header';
@@ -38,62 +49,71 @@ export function MainDashboard() {
     'date-desc'
   );
 
-  const [editingBookmark, setEditingBookmark] = useState<Bookmark | undefined>(undefined);
+  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
-
-
-  useEffect(() => {
-    // In a real app, you would fetch bookmarks from Firestore here.
-    // For now, we sort the mock data by date descending on initial load.
-    const sortedMockData = [...mockBookmarks].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    setBookmarks(sortedMockData);
-  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
-  
+
+  useEffect(() => {
+    if (user?.uid) {
+      const q = query(collection(db, 'bookmarks'), where('userId', '==', user.uid));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const userBookmarks: Bookmark[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          userBookmarks.push({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate()?.toISOString() || new Date().toISOString(),
+          } as Bookmark);
+        });
+        setBookmarks(userBookmarks);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!dialogOpen) {
-      setEditingBookmark(undefined);
+      setEditingBookmark(null);
     }
   }, [dialogOpen]);
 
-  const handleAddBookmark = (newBookmarkData: Omit<Bookmark, 'id' | 'createdAt'>) => {
-    const newBookmark: Bookmark = {
-      ...newBookmarkData,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setBookmarks((prev) => [newBookmark, ...prev]);
-  };
-
-  const handleEditBookmark = (updatedBookmarkData: Omit<Bookmark, 'id' | 'createdAt'>, id: string) => {
-    setBookmarks((prev) =>
-      prev.map((bm) =>
-        bm.id === id ? { ...bm, ...updatedBookmarkData, id: bm.id, createdAt: bm.createdAt } : bm
-      )
-    );
-    setEditingBookmark(undefined);
-  };
-  
-  const handleSaveBookmark = (bookmarkData: Omit<Bookmark, 'id' | 'createdAt'>, id?: string) => {
-    if (id) {
-      handleEditBookmark(bookmarkData, id);
-    } else {
-      handleAddBookmark(bookmarkData);
+  const handleSaveBookmark = async (bookmarkData: Omit<Bookmark, 'id' | 'createdAt'>, id?: string) => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save bookmarks.' });
+      return;
     }
-    setDialogOpen(false);
+
+    try {
+      if (id) {
+        // Edit
+        const bookmarkRef = doc(db, 'bookmarks', id);
+        await updateDoc(bookmarkRef, { ...bookmarkData });
+        toast({ title: 'Success', description: 'Bookmark updated.' });
+      } else {
+        // Add
+        await addDoc(collection(db, 'bookmarks'), {
+          ...bookmarkData,
+          userId: user.uid,
+          createdAt: serverTimestamp(),
+        });
+        toast({ title: 'Success', description: 'Bookmark added.' });
+      }
+      setDialogOpen(false);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   };
 
   const openAddDialog = () => {
     setDialogMode('add');
-    setEditingBookmark(undefined);
+    setEditingBookmark(null);
     setDialogOpen(true);
   };
 
@@ -103,13 +123,16 @@ export function MainDashboard() {
     setDialogOpen(true);
   };
 
-
-  const handleDeleteBookmark = (id: string) => {
-    setBookmarks((prev) => prev.filter((bm) => bm.id !== id));
-    toast({
-      title: 'Bookmark Deleted',
-      description: 'The bookmark has been removed from your list.',
-    });
+  const handleDeleteBookmark = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'bookmarks', id));
+      toast({
+        title: 'Bookmark Deleted',
+        description: 'The bookmark has been removed from your list.',
+      });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   };
 
   const allTags = useMemo(() => {
@@ -201,7 +224,6 @@ export function MainDashboard() {
         mode={dialogMode}
         bookmark={editingBookmark}
       >
-        {/* This is a controlled component, the trigger is handled in Header/BookmarkCard */}
         <div style={{ display: 'none' }} />
       </AddBookmarkDialog>
 

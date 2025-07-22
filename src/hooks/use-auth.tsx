@@ -1,57 +1,76 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import {
+  User as FirebaseAuthUser,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  updateProfile,
+} from 'firebase/auth';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { auth } from '@/lib/firebase';
 
 type User = {
-  email: string;
-  name?: string;
+  uid: string;
+  email: string | null;
+  name: string | null;
 };
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  login: (credentials: { email: string; name?: string }) => void;
-  logout: () => void;
+  login: (credentials: any) => Promise<any>;
+  logout: () => Promise<void>;
+  register: (credentials: any) => Promise<any>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// A mock auth provider
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, you'd verify a token with your backend
-    try {
-      const storedUser = localStorage.getItem('linksafe-user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseAuthUser | null) => {
+      if (firebaseUser) {
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName,
+        });
+      } else {
+        setUser(null);
       }
-    } catch (error) {
-      console.error('Failed to parse user from localStorage', error);
-      setUser(null);
-    } finally {
       setLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = ({ email, name = 'User' }: { email: string; name?: string }) => {
-    const userData = { email, name };
-    localStorage.setItem('linksafe-user', JSON.stringify(userData));
-    setUser(userData);
+  const login = (credentials: any) => {
+    return signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+  };
+
+  const register = async (credentials: any) => {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      credentials.email,
+      credentials.password
+    );
+    await updateProfile(userCredential.user, {
+      displayName: credentials.name,
+    });
+    return userCredential;
   };
 
   const logout = () => {
-    localStorage.removeItem('linksafe-user');
-    setUser(null);
+    return firebaseSignOut(auth);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = { user, loading, login, logout, register };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => {
