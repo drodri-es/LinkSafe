@@ -16,15 +16,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth.tsx';
 import type { Bookmark } from '@/lib/types';
 
 type HeaderProps = {
   onAddBookmark: (bookmark: Omit<Bookmark, 'id' | 'createdAt'>) => void;
   setSearchText: (text: string) => void;
+  openAddDialog: () => void;
 };
 
-export function Header({ onAddBookmark, setSearchText }: HeaderProps) {
+export function Header({ onAddBookmark, setSearchText, openAddDialog }: HeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
 
@@ -53,12 +54,10 @@ export function Header({ onAddBookmark, setSearchText }: HeaderProps) {
             />
           </div>
         </form>
-        <AddBookmarkDialog onSave={onAddBookmark} mode="add">
-          <Button className="shrink-0">
+        <Button className="shrink-0" onClick={openAddDialog}>
             <Plus className="mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Add Bookmark</span>
-          </Button>
-        </AddBookmarkDialog>
+        </Button>
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

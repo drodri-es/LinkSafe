@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth.tsx';
 import { mockBookmarks } from '@/lib/data';
 import type { Bookmark } from '@/lib/types';
 import { AddBookmarkDialog } from './add-bookmark-dialog';
@@ -40,6 +40,7 @@ export function MainDashboard() {
   );
 
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | undefined>(undefined);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -56,6 +57,12 @@ export function MainDashboard() {
       router.push('/login');
     }
   }, [user, loading, router]);
+  
+  useEffect(() => {
+    if (!isEditDialogOpen) {
+      setEditingBookmark(undefined);
+    }
+  }, [isEditDialogOpen]);
 
   const handleAddBookmark = (newBookmarkData: Omit<Bookmark, 'id' | 'createdAt'>) => {
     const newBookmark: Bookmark = {
@@ -124,12 +131,7 @@ export function MainDashboard() {
   }, [bookmarks, searchText, selectedTags, sortOrder]);
 
   const openAddDialog = () => {
-    // This is a bit of a hack to trigger the dialog from a child component.
-    // In a real app, context or a more robust state management solution might be better.
-    const trigger = document.querySelector('#add-bookmark-trigger button');
-    if (trigger instanceof HTMLElement) {
-      trigger.click();
-    }
+    setIsAddDialogOpen(true);
   };
 
   if (loading || !user) {
@@ -151,7 +153,7 @@ export function MainDashboard() {
         </SidebarUiContent>
       </Sidebar>
       <SidebarInset>
-        <Header onAddBookmark={handleAddBookmark} setSearchText={setSearchText} />
+        <Header onAddBookmark={handleAddBookmark} setSearchText={setSearchText} openAddDialog={openAddDialog} />
         <main className="flex-1 p-4 md:p-6">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Your Bookmarks</h1>
@@ -178,11 +180,15 @@ export function MainDashboard() {
         </main>
       </SidebarInset>
 
-      <div id="add-bookmark-trigger" className="hidden">
-        <AddBookmarkDialog onSave={handleAddBookmark} mode="add">
-            <Button>Hidden Trigger</Button>
-        </AddBookmarkDialog>
-      </div>
+      <AddBookmarkDialog 
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSave={handleAddBookmark}
+        mode="add"
+      >
+        {/* This dialog is controlled programmatically from the header */}
+        <div style={{ display: 'none' }} />
+      </AddBookmarkDialog>
 
       {editingBookmark && (
         <AddBookmarkDialog
