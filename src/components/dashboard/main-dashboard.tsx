@@ -37,6 +37,9 @@ import {
 } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '../logo';
+import { Button } from '../ui/button';
+import { LayoutGrid, List, Rows3 } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 export function MainDashboard() {
   const { user, loading } = useAuth();
@@ -50,6 +53,7 @@ export function MainDashboard() {
   const [sortOrder, setSortOrder] = useState<'date-desc' | 'date-asc' | 'title-asc' | 'title-desc'>(
     'date-desc'
   );
+  const [viewMode, setViewMode] = useState<'big-cards' | 'small-cards' | 'list'>('big-cards');
 
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -212,20 +216,41 @@ export function MainDashboard() {
       <SidebarInset>
         <Header setSearchText={setSearchText} openAddDialog={openAddDialog} />
         <main className="flex-1 p-4 md:p-6">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between gap-4">
             <h1 className="text-2xl font-semibold">Your Bookmarks</h1>
-            <div className="w-[180px]">
-              <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as any)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date-desc">Newest First</SelectItem>
-                  <SelectItem value="date-asc">Oldest First</SelectItem>
-                  <SelectItem value="title-asc">Title (A-Z)</SelectItem>
-                  <SelectItem value="title-desc">Title (Z-A)</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className='flex items-center gap-2'>
+              <ToggleGroup
+                type="single"
+                value={viewMode}
+                onValueChange={(value) => {
+                  if (value) setViewMode(value as any);
+                }}
+                aria-label="View mode"
+              >
+                <ToggleGroupItem value="big-cards" aria-label="Big card view">
+                  <LayoutGrid className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="small-cards" aria-label="Small card view">
+                  <Rows3 className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="List view">
+                  <List className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+
+              <div className="w-[180px]">
+                <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as any)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc">Newest First</SelectItem>
+                    <SelectItem value="date-asc">Oldest First</SelectItem>
+                    <SelectItem value="title-asc">Title (A-Z)</SelectItem>
+                    <SelectItem value="title-desc">Title (Z-A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           <BookmarkList
@@ -233,6 +258,7 @@ export function MainDashboard() {
             onEdit={openEditDialog}
             onDelete={handleDeleteBookmark}
             openAddDialog={openAddDialog}
+            viewMode={viewMode}
           />
         </main>
       </SidebarInset>
