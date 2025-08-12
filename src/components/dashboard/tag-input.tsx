@@ -4,7 +4,6 @@ import { Check, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -46,7 +45,7 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault();
+      e.preventDefault(); // This is the crucial part to prevent form submission
       if (inputValue) {
         handleAddTag(inputValue);
       }
@@ -57,10 +56,9 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
     }
   };
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    if(newValue.trim() !== '') {
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+    if(value.trim() !== '') {
         setOpen(true);
     } else {
         setOpen(false);
@@ -72,13 +70,12 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <div
-        className={cn(
-          'flex h-auto min-h-10 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background'
-        )}
-        onClick={() => inputRef.current?.focus()}
-      >
+    <div
+      className={cn(
+        'flex h-auto min-h-10 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background'
+      )}
+      onClick={() => inputRef.current?.focus()}
+    >
         {tags.map((tag) => (
           <Badge key={tag} variant="secondary" className="text-sm">
             {tag}
@@ -95,60 +92,55 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
             </button>
           </Badge>
         ))}
-        <PopoverTrigger asChild>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder={tags.length > 0 ? '' : placeholder}
-              value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => {
-                if(inputValue.trim() !== '') {
-                    setOpen(true);
-                }
-              }}
-              onBlur={() => {
-                // We need to delay the blur event to allow the popover to be clicked
-                setTimeout(() => setOpen(false), 150)
-              }}
-              className="flex-1 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus:outline-none"
-              {...props}
-            />
-        </PopoverTrigger>
-      </div>
-      <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
-        align="start"
-      >
-        <Command>
-          <CommandInput value={inputValue} onValueChange={setInputValue} placeholder="Search tags..."/>
-          <CommandList>
-            <CommandEmpty>
-                {inputValue ? `No results for "${inputValue}". Press Enter to add.` : 'Type to see suggestions.'}
-            </CommandEmpty>
-            {filteredSuggestions.length > 0 && (
-              <CommandGroup>
-                {filteredSuggestions.map((tag) => (
-                  <CommandItem
-                    key={tag}
-                    onSelect={() => handleAddTag(tag)}
-                    value={tag}
-                  >
-                    <Check
-                        className={cn(
-                        "mr-2 h-4 w-4",
-                        tags.includes(tag) ? "opacity-100" : "opacity-0"
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <div className="flex-1">
+                    <Command>
+                        <CommandInput
+                            ref={inputRef}
+                            value={inputValue}
+                            onValueChange={handleInputChange}
+                            onKeyDown={handleKeyDown}
+                            placeholder={tags.length > 0 ? '' : placeholder}
+                            className="h-auto min-h-0 w-full p-0 text-sm placeholder:text-muted-foreground focus:outline-none"
+                            {...props}
+                        />
+                    </Command>
+                </div>
+            </PopoverTrigger>
+            <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0"
+                align="start"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+                <Command>
+                    <CommandList>
+                        <CommandEmpty>
+                            {inputValue ? `Press Enter to add "${inputValue}"` : 'Type to see suggestions.'}
+                        </CommandEmpty>
+                        {filteredSuggestions.length > 0 && (
+                        <CommandGroup>
+                            {filteredSuggestions.map((tag) => (
+                            <CommandItem
+                                key={tag}
+                                onSelect={() => handleAddTag(tag)}
+                                value={tag}
+                            >
+                                <Check
+                                    className={cn(
+                                    "mr-2 h-4 w-4",
+                                    tags.includes(tag) ? "opacity-100" : "opacity-0"
+                                    )}
+                                />
+                                {tag}
+                            </CommandItem>
+                            ))}
+                        </CommandGroup>
                         )}
-                    />
-                    {tag}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    </div>
   );
 }
