@@ -50,78 +50,97 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
     }
     if (e.key === 'Escape') {
       input.blur();
-      setOpen(false);
     }
   };
 
   const filteredSuggestions = allTags.filter(
     (tag) => !tags.includes(tag) && tag.toLowerCase().includes(inputValue.toLowerCase())
   );
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    if(newValue.trim() !== '' && filteredSuggestions.length > 0) {
+        setOpen(true);
+    } else {
+        setOpen(false);
+    }
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <div
-        className={cn(
-          'flex h-auto min-h-10 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background'
-        )}
-      >
-        {tags.map((tag) => (
-          <Badge key={tag} variant="secondary" className="text-base">
-            {tag}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-1 h-4 w-4 rounded-full text-muted-foreground hover:bg-destructive/80 hover:text-destructive-foreground"
-              onClick={() => handleRemoveTag(tag)}
-            >
-              <X size={14} />
-              <span className="sr-only">Remove {tag}</span>
-            </Button>
-          </Badge>
-        ))}
+    <div
+      className={cn(
+        'flex h-auto min-h-10 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background'
+      )}
+      onClick={() => inputRef.current?.focus()}
+    >
+      {tags.map((tag) => (
+        <Badge key={tag} variant="secondary" className="text-base">
+          {tag}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-1 h-4 w-4 rounded-full text-muted-foreground hover:bg-destructive/80 hover:text-destructive-foreground"
+            onClick={(e) => {
+              e.stopPropagation(); // prevent div click handler from firing
+              handleRemoveTag(tag);
+            }}
+          >
+            <X size={14} />
+            <span className="sr-only">Remove {tag}</span>
+          </Button>
+        </Badge>
+      ))}
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div className="relative flex-grow" onClick={() => setOpen(true)}>
-             <input
-                ref={inputRef}
-                placeholder={tags.length > 0 ? '' : placeholder}
-                value={inputValue}
-                onChange={(e) => {
-                    setInputValue(e.target.value);
-                    if (e.target.value) setOpen(true);
-                    else setOpen(false);
-                }}
-                onFocus={() => {
-                    if (filteredSuggestions.length > 0) setOpen(true)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === 'Escape') {
-                    e.preventDefault();
-                    if(e.key === 'Enter' && inputValue) handleAddTag(inputValue);
-                    setOpen(false);
-                  }
-                }}
-                className="h-full w-full bg-transparent p-0 placeholder:text-muted-foreground focus:outline-none"
-                {...props}
-              />
+          <div className="relative flex-grow">
+            <input
+              ref={inputRef}
+              placeholder={tags.length > 0 ? '' : placeholder}
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                if (inputValue.trim() !== '' && filteredSuggestions.length > 0) {
+                    setOpen(true);
+                }
+              }}
+              onBlur={() => setOpen(false)}
+              className="h-full w-full bg-transparent p-0 placeholder:text-muted-foreground focus:outline-none"
+              {...props}
+            />
           </div>
         </PopoverTrigger>
-      </div>
-       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <PopoverContent
+          className="w-[--radix-popover-trigger-width] p-0"
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <Command>
             <CommandList>
-              <CommandGroup>
-                {filteredSuggestions.map((tag) => (
-                  <CommandItem key={tag} onSelect={() => handleAddTag(tag)}>
-                    {tag}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              {filteredSuggestions.length > 0 && (
+                <CommandGroup>
+                  {filteredSuggestions.map((tag) => (
+                    <CommandItem
+                      key={tag}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleAddTag(tag);
+                      }}
+                      value={tag}
+                    >
+                      {tag}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
               <CommandEmpty>
                 {inputValue ? `No results for "${inputValue}". Press Enter to add.` : 'Type to search.'}
               </CommandEmpty>
             </CommandList>
           </Command>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
