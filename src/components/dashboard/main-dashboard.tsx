@@ -116,15 +116,20 @@ export function MainDashboard() {
     }
 
     try {
+      const dataToSave: any = { ...bookmarkData };
+      if (dataToSave.favicon === undefined) {
+        delete dataToSave.favicon;
+      }
+
       if (id) {
         // Edit
         const bookmarkRef = doc(db, 'bookmarks', id);
-        await updateDoc(bookmarkRef, { ...bookmarkData });
+        await updateDoc(bookmarkRef, dataToSave);
         toast({ title: 'Success', description: 'Bookmark updated.' });
       } else {
         // Add
         await addDoc(collection(db, 'bookmarks'), {
-          ...bookmarkData,
+          ...dataToSave,
           userId: user.uid,
           createdAt: serverTimestamp(),
         });
