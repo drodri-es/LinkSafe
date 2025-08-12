@@ -33,17 +33,20 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
     onChange(tags.filter((tag) => tag !== tagToRemove));
   };
   
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag(inputValue);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const input = inputRef.current
+    if (!input) return;
+
+    if (e.key === 'Enter' && input.value) {
+        e.preventDefault();
+        handleAddTag(input.value);
     }
-    if (e.key === 'Backspace' && inputValue === '') {
+    if (e.key === 'Backspace' && input.value === '') {
       e.preventDefault();
       handleRemoveTag(tags[tags.length - 1]);
     }
     if (e.key === 'Escape') {
-      inputRef.current?.blur();
+      input.blur();
       setOpen(false)
     }
   };
@@ -76,49 +79,37 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
         ))}
         <PopoverTrigger asChild>
           <div className="relative flex-grow">
-            <input
-              {...props}
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => {
-                setInputValue(e.target.value);
-                if(e.target.value) {
-                  setOpen(true)
-                } else {
-                  setOpen(false)
-                }
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder={tags.length > 0 ? '' : placeholder}
-              className="h-full w-full bg-transparent p-0 placeholder:text-muted-foreground focus:outline-none"
-            />
+             <Command onKeyDown={handleKeyDown}>
+                <CommandInput 
+                  ref={inputRef}
+                  placeholder={tags.length > 0 ? '' : placeholder}
+                  value={inputValue}
+                  onValueChange={ (search) => {
+                    setInputValue(search)
+                    if (search) setOpen(true)
+                    else setOpen(false)
+                  }}
+                  className="h-full w-full bg-transparent p-0 placeholder:text-muted-foreground focus:outline-none"
+                  {...props}
+                />
+                 <CommandList>
+                    <CommandEmpty>
+                    {inputValue ? `No results for "${inputValue}". Press Enter to add.` : 'Type to search.'}
+                    </CommandEmpty>
+                    <CommandGroup>
+                    {filteredSuggestions.map((tag) => (
+                        <CommandItem key={tag} onSelect={() => handleAddTag(tag)}>
+                        {tag}
+                        </CommandItem>
+                    ))}
+                    </CommandGroup>
+                </CommandList>
+            </Command>
           </div>
         </PopoverTrigger>
       </div>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
-          <CommandInput 
-            placeholder="Type to search or add..."
-            value={inputValue}
-            onValueChange={ (search) => {
-              setInputValue(search)
-              if (search) setOpen(true)
-              else setOpen(false)
-            }}
-          />
-          <CommandList>
-            <CommandEmpty>
-              {inputValue ? `No results for "${inputValue}". Press Enter to add.` : 'Type to search.'}
-            </CommandEmpty>
-            <CommandGroup>
-              {filteredSuggestions.map((tag) => (
-                <CommandItem key={tag} onSelect={() => handleAddTag(tag)}>
-                  {tag}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+        {/* The command list is now inside the PopoverTrigger area, rendered through the portal */}
       </PopoverContent>
     </Popover>
   );
