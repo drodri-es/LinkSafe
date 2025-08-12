@@ -73,19 +73,6 @@ const getWebsiteDetails = ai.defineTool({
         favicon = `${url.origin}/favicon.ico`;
     }
 
-    // Final check to see if the constructed favicon URL is reachable
-    try {
-        if(favicon) {
-            const faviconResponse = await fetch(favicon, { method: 'HEAD' });
-            if (!faviconResponse.ok) {
-                favicon = undefined;
-            }
-        }
-    } catch (e) {
-        favicon = undefined;
-    }
-
-
     return { title, favicon };
   } catch (error: any) {
     console.error('Error fetching website details:', error.message);
