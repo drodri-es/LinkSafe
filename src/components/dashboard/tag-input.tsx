@@ -56,27 +56,27 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <div
-        className={cn(
-          'flex h-auto min-h-10 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background'
-        )}
-        onClick={() => inputRef.current?.focus()}
-      >
-        {tags.map((tag) => (
-          <Badge key={tag} variant="secondary" className="text-base">
-            {tag}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-1 h-4 w-4 rounded-full text-muted-foreground hover:bg-destructive/80 hover:text-destructive-foreground"
-              onClick={() => handleRemoveTag(tag)}
-            >
-              <X size={14} />
-              <span className="sr-only">Remove {tag}</span>
-            </Button>
-          </Badge>
-        ))}
+    <div
+      className={cn(
+        'flex h-auto min-h-10 w-full flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background'
+      )}
+      onClick={() => inputRef.current?.focus()}
+    >
+      {tags.map((tag) => (
+        <Badge key={tag} variant="secondary" className="text-base">
+          {tag}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-1 h-4 w-4 rounded-full text-muted-foreground hover:bg-destructive/80 hover:text-destructive-foreground"
+            onClick={() => handleRemoveTag(tag)}
+          >
+            <X size={14} />
+            <span className="sr-only">Remove {tag}</span>
+          </Button>
+        </Badge>
+      ))}
+       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div className="relative flex-grow">
              <Command onKeyDown={handleKeyDown}>
@@ -92,25 +92,25 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
                   className="h-full w-full bg-transparent p-0 placeholder:text-muted-foreground focus:outline-none"
                   {...props}
                 />
-                 <CommandList>
-                    <CommandEmpty>
-                    {inputValue ? `No results for "${inputValue}". Press Enter to add.` : 'Type to search.'}
-                    </CommandEmpty>
-                    <CommandGroup>
-                    {filteredSuggestions.map((tag) => (
-                        <CommandItem key={tag} onSelect={() => handleAddTag(tag)}>
-                        {tag}
-                        </CommandItem>
-                    ))}
-                    </CommandGroup>
-                </CommandList>
+                 
             </Command>
           </div>
         </PopoverTrigger>
-      </div>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        {/* The command list is now inside the PopoverTrigger area, rendered through the portal */}
-      </PopoverContent>
-    </Popover>
+         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <CommandList>
+                <CommandEmpty>
+                {inputValue ? `No results for "${inputValue}". Press Enter to add.` : 'Type to search.'}
+                </CommandEmpty>
+                <CommandGroup>
+                {filteredSuggestions.map((tag) => (
+                    <CommandItem key={tag} onSelect={() => handleAddTag(tag)}>
+                    {tag}
+                    </CommandItem>
+                ))}
+                </CommandGroup>
+            </CommandList>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
