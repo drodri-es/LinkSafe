@@ -14,7 +14,23 @@ Before you begin, ensure you have the following installed and set up:
 3.  **Google Account**: To create and manage Firebase projects.
 4.  **GitHub Account**: To host your application's source code.
 
-## Step 1: Set Up Your Firebase Project
+## Step 1: Clone the GitHub Repository
+
+1.  **Clone the Repository**:
+    *   Start by cloning the project's GitHub repository to your local machine.
+    ```bash
+    git clone <repository_url>
+    cd <repository_folder>
+    ```
+    *Replace `<repository_url>` and `<repository_folder>` with the appropriate values.*
+
+2.  **Install Dependencies**:
+    *   Install all the necessary project dependencies using npm.
+    ```bash
+    npm install
+    ```
+
+## Step 2: Set Up Your Firebase Project
 
 1.  **Create a Firebase Project**:
     *   Go to the [Firebase Console](https://console.firebase.google.com/).
@@ -34,21 +50,6 @@ Before you begin, ensure you have the following installed and set up:
     *   Copy the contents of the `firestore.rules` file from your repository and paste them into the editor, replacing the default rules.
     *   Click "Publish".
 
-## Step 2: Set Up Your GitHub Repository
-
-1.  **Create a GitHub Repository**:
-    *   Create a new repository on GitHub (it can be public or private).
-
-2.  **Push Your Code**:
-    *   Clone your new repository to your local machine.
-    *   Copy all the project files (including `.github/workflows` if it exists) into the cloned repository.
-    *   Commit and push the code to your GitHub repository.
-    ```bash
-    git add .
-    git commit -m "Initial commit of LinkSafe application"
-    git push origin main
-    ```
-
 ## Step 3: Connect Firebase App Hosting to GitHub
 
 1.  **Create an App Hosting Backend**:
@@ -57,33 +58,45 @@ Before you begin, ensure you have the following installed and set up:
     *   You will be prompted to connect to GitHub. Authorize Firebase to access your repositories.
 
 2.  **Configure the Backend**:
-    *   **Repository**: Select the GitHub repository you just created.
+    *   **Repository**: Select the GitHub repository you just cloned.
     *   **Branch**: Choose the branch you want to deploy from (e.g., `main`).
     *   **Root Directory**: Leave this as the default (`/`).
 
 3.  **Initial Deployment**:
     *   Firebase will automatically trigger the first deployment as soon as the backend is created. You can monitor the progress in the App Hosting dashboard.
 
-## Step 4: Environment Variables (Important!)
+## Step 4: Configure Environment Variables
 
-The application needs Firebase configuration keys to connect to your project's services. These are stored as secrets in Firebase App Hosting.
+The application needs Firebase configuration keys to connect to your project's services. These are stored as secrets in Firebase App Hosting and used by your server-side code.
 
 1.  **Find Your Firebase Config**:
     *   In the Firebase Console, go to "Project Settings" (gear icon).
-    *   Scroll down to the "Your apps" card. If you don't have a web app registered, create one.
+    *   Scroll down to the "Your apps" card. If you don't have a web app registered, create one by clicking the `</>` (web) icon.
     *   In the web app's settings, find the "Firebase SDK snippet" and select "Config".
 
-2.  **The application code uses the following environment variables. Set them in the App Hosting backend settings:**
+2.  **Set Secrets in App Hosting**:
+    *   Navigate to your App Hosting backend settings in the Firebase Console.
+    *   The application code uses the following environment variables. You must add each one as a secret, copying the corresponding value from your Firebase config.
+        *   `PROJECT_ID`
+        *   `APP_ID`
+        *   `STORAGE_BUCKET`
+        *   `API_KEY`
+        *   `AUTH_DOMAIN`
+        *   `MESSAGING_SENDER_ID`
 
-    *   `PROJECT_ID`
-    *   `APP_ID`
-    *   `STORAGE_BUCKET`
-    *   `API_KEY`
-    *   `AUTH_DOMAIN`
-    *   `MESSAGING_SENDER_ID`
+3.  **Update Client-Side Firebase Configuration**:
+    *   You also need to update the configuration for the client-side part of the app. Open the following files in your local code editor:
+        *   `src/lib/firebase.ts`
+        *   `src/ai/genkit.ts`
+    *   Replace the placeholder values in the `initializeApp` function in both files with the actual values from your Firebase project's configuration.
 
-3.  **Update `src/lib/firebase.ts` and `src/ai/genkit.ts`**:
-    *   Manually replace the placeholder values in these files with the actual values from your Firebase project's configuration. This is crucial for both client-side and server-side functionality.
+4.  **Commit and Push the Changes**:
+    *   After updating the files, commit and push them to your GitHub repository. This will trigger a new deployment with the correct client-side configuration.
+    ```bash
+    git add src/lib/firebase.ts src/ai/genkit.ts
+    git commit -m "Configure Firebase client SDK"
+    git push origin main
+    ```
 
 ## Step 5: Automatic Deployments
 
