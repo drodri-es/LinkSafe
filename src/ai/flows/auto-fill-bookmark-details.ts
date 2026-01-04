@@ -10,7 +10,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const AutoFillBookmarkDetailsInputSchema = z.object({
   url: z.string().url().describe('The URL of the website to fetch details from.'),
