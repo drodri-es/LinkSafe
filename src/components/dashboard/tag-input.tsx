@@ -44,9 +44,24 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const commandRef = inputRef.current?.closest('[cmdk-root]');
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const event = new KeyboardEvent(e.nativeEvent.type, e.nativeEvent);
+        commandRef?.dispatchEvent(event);
+    }
     if (e.key === 'Enter') {
-      e.preventDefault(); 
+      // Let cmdk handle selection first. If it does, prevent default form submission.
+      const selectedValue = commandRef?.querySelector('[cmdk-item][aria-selected="true"]')?.getAttribute('data-value');
+      if (selectedValue) {
+        e.preventDefault();
+        handleAddTag(selectedValue);
+        return;
+      }
+      
+      // If no suggestion is selected, add the current input value as a new tag.
       if (inputValue) {
+        e.preventDefault();
         handleAddTag(inputValue);
       }
     }
@@ -58,11 +73,7 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
   
   const handleInputChange = (value: string) => {
     setInputValue(value);
-    if(value.trim() !== '' && filteredSuggestions(value).length > 0) {
-        setOpen(true);
-    } else {
-        setOpen(false);
-    }
+    setOpen(value.trim() !== '');
   };
 
   const filteredSuggestions = (currentValue: string) => {
