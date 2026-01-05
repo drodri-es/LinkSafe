@@ -95,14 +95,14 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <div className="flex-1">
-                    <Command>
+                    <Command shouldFilter={false} className="bg-transparent">
                         <CommandInput
                             ref={inputRef}
                             value={inputValue}
                             onValueChange={handleInputChange}
                             onKeyDown={handleKeyDown}
                             placeholder={tags.length > 0 ? '' : placeholder}
-                            className="h-auto min-h-0 w-full p-0 text-sm placeholder:text-muted-foreground focus:outline-none"
+                            className="h-auto min-h-0 w-full border-none p-0 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-0"
                             {...props}
                         />
                     </Command>
