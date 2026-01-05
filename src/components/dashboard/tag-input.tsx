@@ -45,7 +45,7 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault(); // This is the crucial part to prevent form submission
+      e.preventDefault(); 
       if (inputValue) {
         handleAddTag(inputValue);
       }
@@ -58,16 +58,18 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
   
   const handleInputChange = (value: string) => {
     setInputValue(value);
-    if(value.trim() !== '') {
+    if(value.trim() !== '' && filteredSuggestions(value).length > 0) {
         setOpen(true);
     } else {
         setOpen(false);
     }
   };
 
-  const filteredSuggestions = allTags.filter(
-    (tag) => !tags.includes(tag) && tag.toLowerCase().includes(inputValue.toLowerCase())
-  );
+  const filteredSuggestions = (currentValue: string) => {
+    return allTags.filter(
+      (tag) => !tags.includes(tag) && tag.toLowerCase().includes(currentValue.toLowerCase())
+    );
+  }
 
   return (
     <div
@@ -83,7 +85,7 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
               type="button"
               className="ml-1 h-4 w-4 rounded-full text-muted-foreground ring-offset-background transition-colors hover:bg-destructive/80 hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               onClick={(e) => {
-                e.stopPropagation(); // prevent div click handler from firing
+                e.stopPropagation(); 
                 handleRemoveTag(tag);
               }}
             >
@@ -95,7 +97,7 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <div className="flex-1">
-                    <Command shouldFilter={false} className="bg-transparent">
+                    <Command className="bg-transparent">
                         <CommandInput
                             ref={inputRef}
                             value={inputValue}
@@ -114,13 +116,13 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
                 onOpenAutoFocus={(e) => e.preventDefault()}
             >
                 <Command>
+                    <CommandInput value={inputValue} onValueChange={handleInputChange} className="hidden" />
                     <CommandList>
                         <CommandEmpty>
                             {inputValue ? `Press Enter to add "${inputValue}"` : 'Type to see suggestions.'}
                         </CommandEmpty>
-                        {filteredSuggestions.length > 0 && (
                         <CommandGroup>
-                            {filteredSuggestions.map((tag) => (
+                            {filteredSuggestions(inputValue).map((tag) => (
                             <CommandItem
                                 key={tag}
                                 onSelect={() => handleAddTag(tag)}
@@ -136,7 +138,6 @@ export function TagInput({ value: tags, onChange, allTags, placeholder, ...props
                             </CommandItem>
                             ))}
                         </CommandGroup>
-                        )}
                     </CommandList>
                 </Command>
             </PopoverContent>
